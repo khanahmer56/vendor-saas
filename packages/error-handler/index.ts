@@ -41,7 +41,7 @@ export class InternalServerError extends AppError {
   }
 }
 export class ValidationError extends AppError {
-  constructor(message: "Invalid Request data", details?: any) {
+  constructor(message: any, details?: any) {
     super(message, 400, true, details);
   }
 }
