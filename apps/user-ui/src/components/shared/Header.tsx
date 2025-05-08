@@ -1,9 +1,12 @@
+"use client";
 import Link from "next/link";
 import React from "react";
 import { HeartIcon, Search, ShoppingCart, User } from "lucide-react";
 import HeaderBottom from "./HeaderBottom";
+import useUser from "@/hooks/useUser";
 
 const Header = () => {
+  const { user, isLoading } = useUser();
   return (
     <div className="w-full bg-white">
       <div className="w-[80%] py-5 m-auto flex items-center justify-between">
@@ -22,16 +25,21 @@ const Header = () => {
             <Search color="#fff" />
           </div>
         </div>
-        <Link
-          href="/login"
-          className="border-2 w-[50px] h-[50px] rounded-full border-[#e5e7eb] flex items-center justify-center"
-        >
-          <User />
-        </Link>
-        <Link href={"/login"}>
-          <span className="block font-medium">Hello,</span>
-          <span className="font-semibold">Ahmer</span>
-        </Link>
+        {!isLoading && user && (
+          <>
+            <Link
+              href="/login"
+              className="border-2 w-[50px] h-[50px] rounded-full border-[#e5e7eb] flex items-center justify-center"
+            >
+              <User />
+            </Link>
+            <Link href={"/login"}>
+              <span className="block font-medium">Hello,</span>
+              <span className="font-semibold">{user?.name}</span>
+            </Link>
+          </>
+        )}
+
         <div className="flex items-center gap-5">
           <Link href="/whishlist" className="relative">
             <HeartIcon />

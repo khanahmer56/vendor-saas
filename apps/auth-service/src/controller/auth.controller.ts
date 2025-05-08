@@ -12,7 +12,7 @@ import bcrypt from "bcryptjs";
 import prisma from "../../../../packages/libs/prisma";
 import { ValidationError } from "../../../../packages/error-handler";
 import { verify } from "crypto";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import { setCookies } from "../utils/cookies/setCookies";
 
 export const userRegitration = async (
@@ -126,7 +126,47 @@ export const loginUser = async (
     return next(error);
   }
 };
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const refreshToken = req.cookies.refresh_token;
+    if (!refreshToken) {
+      throw new ValidationError("Please login first");
+    }
+    const decoded: any = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    );
+    if (!decoded || !decoded.id || !decoded.role) {
+      throw new JsonWebTokenError("Invalid token");
+    }
 
+    const user = await prisma.users.findUnique({
+      where: {
+        id: decoded.id,
+      },
+    });
+    if (!user) {
+      throw new ValidationError("User not found");
+    }
+    const newAccessToken = jwt.sign(
+      { id: user.id, role: decoded.role },
+      process.env.ACCESS_TOKEN_SECRET!,
+      {
+        expiresIn: "15m",
+      }
+    );
+    setCookies(res, "access_token", newAccessToken);
+    return res.status(200).json({
+      message: "Token refreshed successfully",
+      access_token: newAccessToken,
+      success: true,
+    });
+  } catch (error) {}
+};
 export const userForgetPassword = async (
   req: Request,
   res: Response,
@@ -141,6 +181,7 @@ export const verifyUserForgetPassword = async (
 ) => {
   await verifyForgetPasswordOtp(req, res, next);
 };
+
 export const resetUserpassword = async (
   req: Request,
   res: Response,
@@ -176,6 +217,26 @@ export const resetUserpassword = async (
     });
     res.status(200).json({
       message: "Password reset successfully",
+      success: true,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+export const getuser = async (req: any, res: Response, next: NextFunction) => {
+  console.log("hii");
+  try {
+    const user = await prisma.users.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
+    if (!user) {
+      return next(new ValidationError("User not found"));
+    }
+    res.status(200).json({
+      message: "User fetched successfully",
+      user,
       success: true,
     });
   } catch (error) {

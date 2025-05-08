@@ -1,6 +1,7 @@
 import Header from "@/components/shared/Header";
 import "./global.css";
 import { Poppins, Roboto } from "next/font/google";
+import Providers from "@/Providers";
 
 export const metadata = {
   title: "E Cart",
@@ -24,10 +25,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <Header />
-      <body className={`${poppins.variable} ${roboto.variable}`}>
-        {children}
-      </body>
+      <Providers>
+        <Header />
+        <body className={`${poppins.variable} ${roboto.variable}`}>
+          {children}
+        </body>
+      </Providers>
     </html>
   );
 }

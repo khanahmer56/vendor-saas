@@ -17,13 +17,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(
-  cors({
-    origin: ["http://localhost:3000"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+
 app.use(express.json());
 app.use(cookieParser());
 app.get("/", (req, res) => {

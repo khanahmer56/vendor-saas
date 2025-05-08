@@ -67,20 +67,19 @@ export const verifyUser = async (
   next: NextFunction
 ) => {
   const storedOtp = parseInt((await redis.get(`otp:${email}`)) || "0");
-  console.log("storedOtp", typeof storedOtp, typeof otp);
   if (!storedOtp) {
     throw new ValidationError("Invalid or expired OTP");
   }
   const failedAttemptsKey = `otp_failed_attempts:${email}`;
   const failedAttempts = parseInt((await redis.get(failedAttemptsKey)) || "0");
-  if (storedOtp !== +otp) {
+  if (storedOtp != +otp) {
     if (failedAttempts >= 2) {
       await redis.set(`otp_lock:${email}`, "locked", "EX", 1800);
       await redis.del(`otp:${email}`, failedAttemptsKey);
       throw new ValidationError("Account locked for 5 minutes");
     }
     await redis.set(failedAttemptsKey, failedAttempts + 1, "EX", 60);
-    throw new ValidationError("Invalid OTP");
+    throw new ValidationError("Invalid OTPs");
   }
 };
 
@@ -124,6 +123,13 @@ export const verifyForgetPasswordOtp = async (
     if (!email || !otp) {
       throw new ValidationError("All fields are required");
     }
-    await verifyOtp(email, otp, next);
-  } catch (error) {}
+    await verifyUser(email, otp, next);
+    res.status(200).json({
+      message: "Otp verified successfully",
+      success: true,
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
 };

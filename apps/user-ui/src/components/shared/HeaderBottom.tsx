@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 const HeaderBottom = () => {
   const [show, setShow] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 100) {
@@ -20,6 +21,7 @@ const HeaderBottom = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
   console.log("isSticky", isSticky);
   return (
     <div
