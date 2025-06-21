@@ -47,3 +47,5 @@ test-output
 .next
 out
 .env
+.env.local
+.env.*.local
