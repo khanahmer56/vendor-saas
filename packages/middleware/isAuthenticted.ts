@@ -10,7 +10,9 @@ export const isAuthenticated = async (
   try {
     console.log("req.cookies", req.cookies);
     const token =
-      req.cookies.access_token || req.headers.authorization?.split(" ")[1];
+      req.cookies["access_token"] ||
+      req.cookies["seller_access_token"] ||
+      req.headers.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).json({ message: "Unauthorizeda" });
     }
@@ -21,15 +23,29 @@ export const isAuthenticated = async (
     if (!decoded) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const account = await prisma.users.findUnique({
-      where: {
-        id: decoded.id,
-      },
-    });
+    let account;
+    if (decoded.role === "user") {
+      account = await prisma.users.findUnique({
+        where: {
+          id: decoded.id,
+        },
+      });
+    } else if (decoded.role === "seller") {
+      account = await prisma.sellers.findUnique({
+        where: {
+          id: decoded.id,
+        },
+        include: { shop: true },
+      });
+      req.seller = account;
+    }
+
     if (!account) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    req.user = account;
+    req.role = decoded.role;
     return next();
-  } catch (error) {}
+  } catch (error) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 };

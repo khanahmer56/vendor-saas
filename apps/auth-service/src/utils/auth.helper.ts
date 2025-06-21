@@ -95,10 +95,13 @@ export const handleForgetPassword = async (
       throw new ValidationError("Email is required");
     }
     const user =
-      userType === "user" &&
-      (await prisma.users.findUnique({
-        where: { email },
-      }));
+      userType === "user"
+        ? await prisma.users.findUnique({
+            where: { email },
+          })
+        : await prisma.sellers.findUnique({
+            where: { email },
+          });
     if (!user) {
       throw new ValidationError(`${userType} not found`);
     }
