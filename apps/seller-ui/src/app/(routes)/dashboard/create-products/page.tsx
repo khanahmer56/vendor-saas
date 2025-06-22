@@ -1,4 +1,7 @@
 "use client";
+import ColorSelector from "@/shared/colorselector";
+import CustomProperties from "@/shared/custom-properties";
+import CustomSpecification from "@/shared/custom-specification";
 import ImagePlaceholder from "@/shared/ImagePlaceholder";
 import Input from "@/shared/Input";
 import { ChevronRight } from "lucide-react";
@@ -54,10 +57,7 @@ const Dashboard = () => {
       </h2>
       <div className="flex items-center">
         <span className="text-[#80Deea] ">Dashboard</span>
-        <ChevronRight
-          size={20}
-          className="text-[#80Deea] mx-2 opacity-[0.8 ]"
-        />
+        <ChevronRight size={20} className="text-[#80Deea] mx-2 opacity-[0.8]" />
         <span className="text-white">Create Product</span>
       </div>
       <div className="py-4 w-full flex gap-6">
@@ -161,6 +161,39 @@ const Dashboard = () => {
               </span>
             )}
           </div>
+          <div className="mt-2">
+            <ColorSelector control={control} errors={errors} />
+          </div>
+          <div className="mt-2">
+            <CustomSpecification control={control} errors={errors} />
+          </div>
+          <div className="mt-2">
+            <CustomProperties control={control} errors={errors} />
+          </div>
+          <div className="mt-2">
+            <label className="block font-semibold text-gray-300 mb-1">
+              Cash On Delivery *
+            </label>
+            <select
+              {...register("cash_on_delivery", {
+                required: "Cash On Delivery is required",
+              })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-opacity-50 bg-gray-900"
+            >
+              <option value="true">Yes</option>
+              <option value="false">No</option>
+            </select>
+            {errors.cashOnDelivery && (
+              <span className="text-red-500">
+                {errors.cashOnDelivery.message as string}
+              </span>
+            )}
+          </div>
+        </div>
+        <div>
+          <label className="block font-semibold text-gray-300 mb-1">
+            Category*
+          </label>
         </div>
       </div>
     </form>
