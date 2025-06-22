@@ -50,6 +50,8 @@ app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.get("/gateway-health", (req, res) => {
   res.send({ message: "Welcome to api-gateway!" });
 });
+app.use("/api/product", proxy("http://localhost:6002"));
+
 app.use("/", proxy("http://localhost:6001"));
 
 const port = process.env.PORT || 8080;

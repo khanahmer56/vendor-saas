@@ -4,6 +4,8 @@ import CustomProperties from "@/shared/custom-properties";
 import CustomSpecification from "@/shared/custom-specification";
 import ImagePlaceholder from "@/shared/ImagePlaceholder";
 import Input from "@/shared/Input";
+import axiosInstance from "@/utils/axiosInstance";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import React, { useState } from "react";
 import { set, useForm } from "react-hook-form";
@@ -22,6 +24,20 @@ const Dashboard = () => {
   const [isChanged, setIsChanged] = useState(false);
   const [images, setImages] = useState<(File | null)[]>([null]);
   const [loading, setLoading] = useState(false);
+  const { data } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      try {
+        const res = await axiosInstance.get("/product/api/get-product");
+        return res.data;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
+  });
+  console.log("dataa", data);
   const onSubmit = (data: any) => {};
   const handleImageChange = (file: File | null, index: number) => {
     const newImages = [...images];
