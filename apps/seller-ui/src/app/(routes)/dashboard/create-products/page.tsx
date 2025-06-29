@@ -4,11 +4,13 @@ import CustomProperties from "@/shared/custom-properties";
 import CustomSpecification from "@/shared/custom-specification";
 import ImagePlaceholder from "@/shared/ImagePlaceholder";
 import Input from "@/shared/Input";
+import RichTextEditor from "@/shared/rich-text-editor";
+import SizeSelector from "@/shared/size-selector";
 import axiosInstance from "@/utils/axiosInstance";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
-import React, { useState } from "react";
-import { set, useForm } from "react-hook-form";
+import { ChevronRight, Circle } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Controller, set, useForm } from "react-hook-form";
 
 const Dashboard = () => {
   const {
@@ -21,10 +23,10 @@ const Dashboard = () => {
     formState: { errors },
   } = useForm();
   const [openImageModel, setOpenImageModel] = useState(false);
-  const [isChanged, setIsChanged] = useState(false);
+  const [isChanged, setIsChanged] = useState(true);
   const [images, setImages] = useState<(File | null)[]>([null]);
   const [loading, setLoading] = useState(false);
-  const { data } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
       try {
@@ -38,6 +40,16 @@ const Dashboard = () => {
     retry: 2,
   });
   console.log("dataa", data);
+  const categories = data?.categories || [];
+  const subCategories = data?.subCategories || [];
+  const selectedCategory = watch("category");
+  const regularPrice = watch("regular_price");
+  const subcategoriesData = useMemo(() => {
+    if (selectedCategory) {
+      return subCategories[selectedCategory] || [];
+    }
+    return [];
+  }, [selectedCategory, subCategories]);
   const onSubmit = (data: any) => {};
   const handleImageChange = (file: File | null, index: number) => {
     const newImages = [...images];
@@ -63,6 +75,16 @@ const Dashboard = () => {
     });
     setValue(`images`, images);
   };
+  const { data: discountCodes = [] as any, isLoading: isDiscountLoading } =
+    useQuery({
+      queryKey: ["shop-discount"],
+      queryFn: async () => {
+        const res = await axiosInstance.get("/product/api/get-discount-code");
+        return res?.data?.discountCodes || [];
+      },
+    });
+  console.log("discountCodes", discountCodes);
+  const handleSavedDraft = () => {};
   return (
     <form
       className="w-full mx-auto p-8 shadow-md rounded-lg text-white"
@@ -206,10 +228,250 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        <div>
+        <div className="md:w-[35%]">
           <label className="block font-semibold text-gray-300 mb-1">
             Category*
           </label>
+          {isLoading ? (
+            <Circle className="animate-spin" />
+          ) : isError ? (
+            <p className="text-red-500">Failed to fetch categories</p>
+          ) : (
+            <Controller
+              name="category"
+              control={control}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none bg-gray-900"
+                >
+                  <option value="" className="bg-black">
+                    Select Category
+                  </option>
+                  {categories.map((category: string) => (
+                    <option
+                      key={category}
+                      value={category}
+                      className="bg-black"
+                    >
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+          )}
+          {errors.category && (
+            <span className="text-red-500">
+              {errors.category.message as string}
+            </span>
+          )}
+          <div className="mt-2">
+            <label className="block font-semibold text-gray-300 mb-1">
+              SubCategory*
+            </label>
+            <Controller
+              name="subCategory"
+              control={control}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  className="w-full px-3 py-2 border border-gray-700 rounded-md focus:outline-none bg-gray-900"
+                >
+                  <option value="" className="bg-black">
+                    Select Category
+                  </option>
+                  {subcategoriesData.map((category: string) => (
+                    <option
+                      key={category}
+                      value={category}
+                      className="bg-black"
+                    >
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+            {errors.subCategory && (
+              <span className="text-red-500">
+                {errors.subCategory.message as string}
+              </span>
+            )}
+            <div className="mt-2">
+              <label>Detailed Description* (Min 100 words)</label>
+              <Controller
+                name="detailed_description"
+                control={control}
+                rules={{
+                  required: "Description is required",
+                  validate: (value) => {
+                    const wordCount = value.split(" ").length;
+                    return (
+                      wordCount >= 100 ||
+                      "Description must be at least 100 words"
+                    );
+                  },
+                }}
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.detailed_description && (
+                <span className="text-red-500">
+                  {errors.detailed_description.message as string}
+                </span>
+              )}
+            </div>
+            <div className="mt-2">
+              <Input
+                label="Video Url"
+                type="text"
+                {...register("video_url")}
+                placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+              />
+              {errors.video_url && (
+                <span className="text-red-500">
+                  {errors.video_url.message as string}
+                </span>
+              )}
+              <div className="mt-2">
+                <Input
+                  label="Regular Price*"
+                  placeholder="0.00$"
+                  {...register("regular_price", {
+                    min: {
+                      value: 1,
+                      message: "Regular Price must be at least 1.00$",
+                    },
+                    validate: (value) => {
+                      const regex = /^[0-9]+(\.[0-9]{1,2})?$/;
+                      return (
+                        regex.test(value) ||
+                        "Regular Price must be a valid number"
+                      );
+                    },
+                  })}
+                />
+                {errors.regular_price && (
+                  <span className="text-red-500">
+                    {errors.regular_price.message as string}
+                  </span>
+                )}
+              </div>
+              <div className="mt-2">
+                <Input
+                  label="Sales Price"
+                  placeholder="0.00$"
+                  {...register("sales_price", {
+                    validate: (value) => {
+                      const regex = /^[0-9]+(\.[0-9]{1,2})?$/;
+                      return (
+                        regex.test(value) ||
+                        "Sales Price must be a valid number"
+                      );
+                    },
+                  })}
+                />
+                {errors.sales_price && (
+                  <span className="text-red-500">
+                    {errors.sales_price.message as string}
+                  </span>
+                )}
+                <div></div>
+              </div>
+              <div className="mt-2">
+                <Input
+                  label="Stock Price"
+                  placeholder="0.00$"
+                  {...register("stock_price", {
+                    min: {
+                      value: 1,
+                      message: "Stock Price must be at least 1.00$",
+                    },
+                    max: {
+                      value: 1000,
+                      message: "Stock Price must be at most 1000.00$",
+                    },
+                  })}
+                />
+                {errors.stock_price && (
+                  <span className="text-red-500">
+                    {errors.stock_price.message as string}
+                  </span>
+                )}
+                <div className="mt-2">
+                  <SizeSelector control={control} errors={errors} />
+                </div>
+                <div className="mt-3">
+                  <label className="block font-semibold text-gray-300 mb-1">
+                    Select Discount Codes (optional)
+                  </label>
+                  {isDiscountLoading ? (
+                    <p className="text-gray-400">Loading discount codes...</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {discountCodes?.map(
+                        (
+                          code: { id: string; discountCode: string },
+                          index: number
+                        ) => {
+                          const selected = (
+                            watch("discountCodes") || []
+                          ).includes(code.id);
+
+                          return (
+                            <button
+                              key={code.id}
+                              type="button"
+                              className={`px-4 py-2 rounded-md transition-colors ${
+                                selected
+                                  ? "bg-green-600 text-white"
+                                  : "bg-gray-800 text-white hover:bg-gray-700"
+                              }`}
+                              onClick={() => {
+                                const currentSelection: string[] =
+                                  watch("discountCodes") || [];
+                                const updatedSelection = selected
+                                  ? currentSelection.filter(
+                                      (id) => id !== code.id
+                                    )
+                                  : [...currentSelection, code.id];
+
+                                setValue("discountCodes", updatedSelection);
+                              }}
+                            >
+                              {code.discountCode}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              {isChanged && (
+                <button
+                  type="submit"
+                  onClick={handleSavedDraft}
+                  className="bg-green-600 px-4 py-2 rounded-md"
+                >
+                  Save Draft
+                </button>
+              )}
+              <button
+                type="submit"
+                className="bg-blue-600 px-4 py-2 rounded-md"
+              >
+                {loading ? "Creating" : "Create"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </form>

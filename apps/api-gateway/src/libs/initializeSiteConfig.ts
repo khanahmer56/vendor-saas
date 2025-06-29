@@ -7,10 +7,17 @@ const initializeConfig = async () => {
     if (!existing) {
       await prisma.site_config.create({
         data: {
-          categories: ["Electronics", "Fashion"],
+          categories: [
+            "Electronics",
+            "Fashion",
+            "Home & Kitchen",
+            "Sports & Fitness",
+          ],
           subCategories: {
             Electronics: ["Mobile", "Laptops", "Cameras"],
             Fashion: ["Men", "Women", "Kids"],
+            HomeKitchen: ["Kitchen", "Bedroom", "Living Room"],
+            "Sports & Fitness": ["Football", "Basketball", "Tennis"],
           },
         },
       });
